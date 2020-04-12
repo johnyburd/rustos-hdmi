@@ -11,3 +11,5 @@ pub mod gpio;
 pub mod interrupt;
 pub mod timer;
 pub mod uart;
+pub mod fb;
+pub mod mbox;

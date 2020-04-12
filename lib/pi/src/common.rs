@@ -5,6 +5,9 @@ pub const IO_BASE_END: usize = 0x40000000;
 /// The base address of the `GPIO` registers
 pub const GPIO_BASE: usize = IO_BASE + 0x200000;
 
+pub const MMIO_BASE: usize = 0x3F000000;
+pub const MBOX_BASE: usize = MMIO_BASE + 0x0000B880;
+
 /// The number of cores in Rpi3
 pub const NCORES: usize = 4;
 

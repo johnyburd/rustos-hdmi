@@ -43,6 +43,7 @@ pub static IRQ: Irq = Irq::uninitialized();
 
 fn kmain() -> ! {
     use pi::timer::spin_sleep;
+    use pi::fb::FrameBuffer;
     use core::time::Duration;
 
     spin_sleep(Duration::from_secs(2));
@@ -63,6 +64,10 @@ fn kmain() -> ! {
         v.push(i);
         kprintln!("{:?}", v);
     }*/
+    let fb = FrameBuffer::new(1024, 768, 32);
+    kprintln!("{:#?}", fb);
+    //kprintln!("{:#?}", fb.mailbox.mailbox);
+    fb.show_picture();
 
     kprintln!("Welcome to cs3210!");
     shell::shell("> ");
