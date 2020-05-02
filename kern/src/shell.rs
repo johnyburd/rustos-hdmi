@@ -4,6 +4,7 @@ use shim::path::{Path, PathBuf};
 use stack_vec::StackVec;
 
 use pi::atags::Atags;
+use pi::fb::FrameBuffer;
 
 use fat32::traits::FileSystem;
 use fat32::traits::{Dir, Entry};
@@ -112,7 +113,7 @@ impl<'a> Command<'a> {
 
     }
 
-    fn exec(&self, working_dir: &mut PathBuf) -> Result<(), ()> {
+    fn exec(&self, working_dir: &mut PathBuf, mut fb: &mut FrameBuffer) -> Result<(), ()> {
         match self.path() {
             "echo" => {
                 for arg in self.args[1..self.args.len() - 1].iter() {
@@ -121,6 +122,7 @@ impl<'a> Command<'a> {
                 kprintln!("{}", self.args[self.args.len() - 1]);
             },
             "ls" => {self.ls(&working_dir);},
+            "show" => {fb.show_picture();},
             _ => kprintln!("{}: command not found", self.path()),
         }
         Ok(())
@@ -153,12 +155,12 @@ fn readline(buf: &mut [u8]) -> &str {
 
 /// Starts a shell using `prefix` as the prefix for each line. This function
 /// never returns.
-pub fn shell(prefix: &str) -> ! {
+pub fn shell(prefix: &str, mut fb: &mut FrameBuffer) -> ! {
     let mut working_dir = PathBuf::from("/");
     loop {
         kprint!("{}", prefix);
         match Command::parse(readline(&mut [0u8; 512]), &mut [""; 64]) {
-            Ok(c) => c.exec(&mut working_dir).unwrap(),
+            Ok(c) => c.exec(&mut working_dir, &mut fb).unwrap(),
             Err(Error::TooManyArgs) => kprintln!("error: too many args"),
             Err(_) => (),
         }

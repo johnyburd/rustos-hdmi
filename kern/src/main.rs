@@ -33,6 +33,7 @@ use traps::irq::Irq;
 use vm::VMManager;
 
 use pi::atags::Atags;
+use pi::fb::FrameBuffer;
 
 #[cfg_attr(not(test), global_allocator)]
 pub static ALLOCATOR: Allocator = Allocator::uninitialized();
@@ -43,7 +44,6 @@ pub static IRQ: Irq = Irq::uninitialized();
 
 fn kmain() -> ! {
     use pi::timer::spin_sleep;
-    use pi::fb::FrameBuffer;
     use core::time::Duration;
 
     spin_sleep(Duration::from_secs(2));
@@ -64,11 +64,12 @@ fn kmain() -> ! {
         v.push(i);
         kprintln!("{:?}", v);
     }*/
-    let fb = FrameBuffer::new(1024, 768, 32);
+    let mut fb = FrameBuffer::new(1920, 1080);
     kprintln!("{:#?}", fb);
     //kprintln!("{:#?}", fb.mailbox.mailbox);
+    spin_sleep(Duration::from_secs(2));
     fb.show_picture();
 
     kprintln!("Welcome to cs3210!");
-    shell::shell("> ");
+    shell::shell("> ", &mut fb);
 }

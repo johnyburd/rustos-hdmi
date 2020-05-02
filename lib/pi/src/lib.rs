@@ -13,3 +13,4 @@ pub mod timer;
 pub mod uart;
 pub mod fb;
 pub mod mbox;
+pub mod data;

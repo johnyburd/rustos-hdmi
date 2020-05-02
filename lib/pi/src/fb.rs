@@ -1,6 +1,8 @@
 use volatile::prelude::*;
 use volatile::{Volatile};
 use crate::mbox::MailBox;
+use crate::data::IMAGE;
+use core::mem::transmute;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum PropertyTag {
@@ -24,14 +26,13 @@ pub struct FrameBuffer {
     pub isrgb: u32,
     pub te: u32,
     pub tn: u32,
-    pub t: u32,
-    pub to: u32,
+    pub fb_addr: *mut u32,
     pub mailbox: MailBox,
 }
 
 impl FrameBuffer {
 
-    pub fn new(width: u32, height: u32, depth: u32) -> FrameBuffer {
+    pub fn new(width: u32, height: u32) -> FrameBuffer {
         let mut mailbox = MailBox::new();
 
         mailbox.mailbox[0].write(35*4);
@@ -40,14 +41,14 @@ impl FrameBuffer {
         mailbox.mailbox[2].write(0x48003);  //set phy wh
         mailbox.mailbox[3].write(8);
         mailbox.mailbox[4].write(8);
-        mailbox.mailbox[5].write(1024);         //FrameBufferInfo.width
-        mailbox.mailbox[6].write(768);          //FrameBufferInfo.height
+        mailbox.mailbox[5].write(width);         //FrameBufferInfo.width
+        mailbox.mailbox[6].write(height);          //FrameBufferInfo.height
 
         mailbox.mailbox[7].write(0x48004);  //set virt wh
         mailbox.mailbox[8].write(8);
         mailbox.mailbox[9].write(8);
-        mailbox.mailbox[10].write(1024);        //FrameBufferInfo.virtual_width
-        mailbox.mailbox[11].write(768);         //FrameBufferInfo.virtual_height
+        mailbox.mailbox[10].write(width);        //FrameBufferInfo.virtual_width
+        mailbox.mailbox[11].write(height);         //FrameBufferInfo.virtual_height
 
         mailbox.mailbox[12].write(0x48009); //set virt offset
         mailbox.mailbox[13].write(8);
@@ -79,21 +80,25 @@ impl FrameBuffer {
         mailbox.mailbox[34].write(0);
 
         mailbox.mbox_call(8).expect("mbox call");
-        //TODO convert to arm
 
         FrameBuffer {
             width: mailbox.mailbox[5].read(),
             height: mailbox.mailbox[6].read(),
             pitch: mailbox.mailbox[33].read(),
             isrgb: mailbox.mailbox[24].read(),
+
             te: mailbox.mailbox[28].read(),
             tn: mailbox.mailbox[29].read(),
-            t: mailbox.mailbox[30].read(),
-            to: mailbox.mailbox[31].read(),
+            fb_addr: ((((mailbox.mailbox[29].read() as usize) << 32) | (mailbox.mailbox[28].read() as usize)) & 0x3FFFFFFF) as *mut u32,
             mailbox: mailbox,
         }
     }
 
-    pub fn show_picture(&self) -> () {
+    pub fn show_picture(&mut self) -> () {
+        //let img: *const u32 = unsafe { transmute(&IMAGE) };
+        for i in 0..(1920*1080) {
+            //unsafe { self.fb_addr.offset(i).write_volatile(img.offset(i).read_volatile()) };
+            unsafe { self.fb_addr.offset(i).write_volatile(IMAGE[i as usize]) };
+        }
     }
 }
